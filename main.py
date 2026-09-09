@@ -1,17 +1,30 @@
+import warnings
+warnings.filterwarnings("ignore")
 import os
 import sys
 from src.state import AgentState
 from src.graph import build_issue_resolver_graph
 
-def main():
-    repo_path = os.path.abspath("./example_repo")
-    print(f"🚀 Starting Smart GitHub Issue Resolver on target repo: {repo_path}\n")
+from src.github_utils import fetch_github_issue
+
+def resolve_github_issue(issue_url: str, local_repo_path: str, fallback_title: str = None, fallback_body: str = None):
+    print(f"\n[GitHub] Fetching issue from GitHub: {issue_url}")
+    try:
+        repo_name, title, body = fetch_github_issue(issue_url)
+    except Exception as e:
+        print(f"[Warning] Remote fetch failed ({e}). Using local fallback issue parameters.")
+        title = fallback_title or "Fix division by zero bug in calculator.py"
+        body = fallback_body or "divide(10, 0) raises ZeroDivisionError, expected to return None safely."
+
+    abs_repo_path = os.path.abspath(local_repo_path)
+    print(f"[Target Repo] Local Path: {abs_repo_path}")
+    print(f"[Issue Title] {title}")
 
     initial_state: AgentState = {
-        "issue_url": "https://github.com/example/demo/issues/1",
-        "issue_title": "Fix division by zero bug in calculator.py",
-        "issue_body": "divide(10, 0) raises ZeroDivisionError, expected to return None safely.",
-        "repo_path": repo_path,
+        "issue_url": issue_url,
+        "issue_title": title,
+        "issue_body": body,
+        "repo_path": abs_repo_path,
         "file_tree": [],
         "target_files": {},
         "patch": None,
@@ -27,18 +40,33 @@ def main():
     }
 
     app = build_issue_resolver_graph()
-    
-    print("🔄 Running LangGraph State Machine...")
     final_state = app.invoke(initial_state)
 
-    print("\n" + "="*50)
-    print("📊 FINAL RESOLUTION SUMMARY")
     print("="*50)
+    print(f"Repo Path:    {abs_repo_path}")
     print(f"Status:       {final_state['status'].upper()}")
     print(f"Tests Passed: {final_state['tests_passed']}")
-    print(f"Branch Name:  {final_state.get('branch_name')}")
     print(f"Patch Info:   {final_state.get('patch')}")
     print("="*50)
+    return final_state
+
+def main():
+    issues_to_resolve = [
+        {
+            "issue_url": "https://github.com/pranjalgupta0280/Uber/issues/1",
+            "local_repo_path": "./example_repo",  # Or absolute path to your local Uber repo
+        }
+    ]
+
+    for item in issues_to_resolve:
+        resolve_github_issue(
+            item["issue_url"],
+            item["local_repo_path"],
+            item.get("fallback_title"),
+            item.get("fallback_body")
+        )
+
 
 if __name__ == "__main__":
     main()
+
