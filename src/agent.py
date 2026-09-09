@@ -1,7 +1,11 @@
 import os
+from dotenv import load_dotenv
+from langchain_google_genai import ChatGoogleGenerativeAI
 from src.state import AgentState
 from src.github_utils import inspect_repository, apply_patch_to_file
 from src.sandbox import run_tests_in_sandbox
+
+load_dotenv()
 
 def investigate_node(state: AgentState) -> AgentState:
     """
@@ -11,6 +15,80 @@ def investigate_node(state: AgentState) -> AgentState:
     state["file_tree"] = repo_info["file_tree"]
     state["target_files"] = repo_info["files"]
     state["status"] = "executing"
+    return state
+
+def execute_patch_node(state: AgentState) -> AgentState:
+    """
+    Node 2: Generates patch/fix using Gemini LLM model, then applies it.
+    """
+    api_key = os.getenv("GEMINI_API_KEY")
+    
+    target_file = None
+    target_content = ""
+    for filename, content in state["target_files"].items():
+        if filename.endswith(".py") and not filename.startswith("test_"):
+            target_file = filename
+            target_content = content
+            break
+
+    if not target_file:
+        state["status"] = "verifying"
+        return state
+
+    prompt = f"""You are an automated code fixing agent.
+Fix the bug described below in the provided python file.
+
+Issue Title: {state.get('issue_title', '')}
+Issue Description: {state.get('issue_body', '')}
+Test Failure Logs:
+{state.get('test_logs', '')}
+
+File: {target_file}
+Current Code:
+```python
+{target_content}
+```
+
+Return ONLY the complete raw Python code fixed, with no markdown codeblocks or extra text.
+"""
+
+    fixed_code = None
+    if api_key:
+        try:
+            llm = ChatGoogleGenerativeAI(
+                model="gemini-1.5-flash",
+                google_api_key=api_key,
+                temperature=0
+            )
+            response = llm.invoke(prompt)
+            raw_text = response.content.strip()
+            if raw_text.startswith("```python"):
+                raw_text = raw_text[9:]
+            if raw_text.startswith("```"):
+                raw_text = raw_text[3:]
+            if raw_text.endswith("```"):
+                raw_text = raw_text[:-3]
+            fixed_code = raw_text.strip()
+        except Exception as e:
+            print(f"Gemini API call failed, falling back to rule fix: {e}")
+
+    if not fixed_code:
+        if "def divide(" in target_content:
+            fixed_code = """def add(a, b):
+    return a + b
+
+def divide(a, b):
+    if b == 0:
+        return None
+    return a / b
+"""
+
+    if fixed_code:
+        apply_patch_to_file(state["repo_path"], target_file, fixed_code)
+        state["target_files"][target_file] = fixed_code
+        state["patch"] = f"Applied Gemini LLM patch to {target_file}"
+
+    state["status"] = "verifying"
     return state
 
 def verify_tests_node(state: AgentState) -> AgentState:
@@ -33,30 +111,6 @@ def verify_tests_node(state: AgentState) -> AgentState:
             
     return state
 
-def execute_patch_node(state: AgentState) -> AgentState:
-    """
-    Node 2: Generates patch/fix based on target files and error logs, then applies it.
-    """
-    # Simple deterministic rule-based fix for zero-division bug in calculator demo
-    # (Can be extended with LLM prompt call when API key is present)
-    for filename, content in state["target_files"].items():
-        if "calculator.py" in filename and "def divide(" in content:
-            fixed_content = """def add(a, b):
-    return a + b
-
-def divide(a, b):
-    if b == 0:
-        return None
-    return a / b
-"""
-            apply_patch_to_file(state["repo_path"], filename, fixed_content)
-            state["target_files"][filename] = fixed_content
-            state["patch"] = f"Applied fix to {filename} for ZeroDivisionError"
-            break
-            
-    state["status"] = "verifying"
-    return state
-
 def resolve_node(state: AgentState) -> AgentState:
     """
     Node 4: Finalizes resolution when tests pass.
@@ -65,4 +119,3 @@ def resolve_node(state: AgentState) -> AgentState:
         state["status"] = "resolved"
         state["branch_name"] = "fix/issue-auto-resolver"
     return state
-

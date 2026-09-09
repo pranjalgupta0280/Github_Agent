@@ -1,0 +1,18 @@
+# API Keys & Secrets
+.env
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest / Virtualenv
+.pytest_cache/
+venv/
+.venv/
+env/
+.env/
+
+# IDE files
+.vscode/
+.idea/
