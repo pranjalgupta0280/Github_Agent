@@ -1,6 +1,34 @@
 import os
 import glob
-from typing import List, Dict
+from typing import List, Dict, Tuple
+from github import Github
+
+def fetch_github_issue(issue_url: str, token: str = None) -> Tuple[str, str, str]:
+    """
+    Parses GitHub issue URL and fetches (repo_full_name, title, body) using PyGithub.
+    Example URL: https://github.com/owner/repo/issues/1
+    """
+    if not token:
+        token = os.getenv("GITHUB_TOKEN")
+        
+    parts = issue_url.rstrip("/").split("/")
+    if len(parts) < 7 or parts[-2] != "issues":
+        raise ValueError(f"Invalid GitHub issue URL format: {issue_url}")
+        
+    owner, repo_name, issue_num = parts[-4], parts[-3], int(parts[-1])
+    repo_full_name = f"{owner}/{repo_name}"
+    
+    g = Github(token) if token else Github()
+    repo = g.get_repo(repo_full_name)
+    issue = repo.get_issue(number=issue_num)
+    
+    return repo_full_name, issue.title, issue.body or ""
+
+def create_pull_request(repo_path: str, branch_name: str, issue_title: str, token: str = None) -> str:
+    """
+    Simulates / triggers PR creation using GitHub PAT token.
+    """
+    return f"https://github.com/example/repo/pull/new/{branch_name}"
 
 def inspect_repository(repo_path: str) -> Dict[str, any]:
     """
@@ -12,8 +40,6 @@ def inspect_repository(repo_path: str) -> Dict[str, any]:
 
     file_tree = []
     files_content = {}
-    
-    # Ignore common build/cache folders
     ignore_dirs = {'.git', '__pycache__', '.pytest_cache', 'venv', '.venv', 'node_modules'}
     
     for root, dirs, files in os.walk(abs_path):
@@ -23,7 +49,6 @@ def inspect_repository(repo_path: str) -> Dict[str, any]:
                 full_path = os.path.join(root, file)
                 rel_path = os.path.relpath(full_path, abs_path)
                 file_tree.append(rel_path)
-                
                 try:
                     with open(full_path, 'r', encoding='utf-8') as f:
                         files_content[rel_path] = f.read()
