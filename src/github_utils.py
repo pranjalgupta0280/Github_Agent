@@ -1,7 +1,11 @@
 import os
 import glob
-from typing import List, Dict, Tuple
-from github import Github
+from typing import List, Dict, Tuple, Any
+from dotenv import load_dotenv
+# pyrefly: ignore [missing-import]
+from github import Github, Auth
+
+load_dotenv()
 
 def fetch_github_issue(issue_url: str, token: str = None) -> Tuple[str, str, str]:
     """
@@ -18,7 +22,8 @@ def fetch_github_issue(issue_url: str, token: str = None) -> Tuple[str, str, str
     owner, repo_name, issue_num = parts[-4], parts[-3], int(parts[-1])
     repo_full_name = f"{owner}/{repo_name}"
     
-    g = Github(token) if token else Github()
+    auth = Auth.Token(token) if token else None
+    g = Github(auth=auth)
     repo = g.get_repo(repo_full_name)
     issue = repo.get_issue(number=issue_num)
     
@@ -30,7 +35,7 @@ def create_pull_request(repo_path: str, branch_name: str, issue_title: str, toke
     """
     return f"https://github.com/example/repo/pull/new/{branch_name}"
 
-def inspect_repository(repo_path: str) -> Dict[str, any]:
+def inspect_repository(repo_path: str) -> Dict[str, Any]:
     """
     Scans repository directory and returns list of source files and file tree.
     """
