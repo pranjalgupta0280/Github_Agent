@@ -54,7 +54,7 @@ def main():
     issues_to_resolve = [
         {
             "issue_url": "https://github.com/pranjalgupta0280/Uber/issues/1",
-            "local_repo_path": "./example_repo",  # Or absolute path to your local Uber repo
+            "local_repo_path": r"C:\node\Uber2",
         }
     ]
 

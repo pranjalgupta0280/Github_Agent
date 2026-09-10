@@ -13,7 +13,10 @@ def run_tests_in_sandbox(repo_path: str, test_cmd: str = None) -> Tuple[bool, st
         return False, f"Repository path does not exist: {abs_repo_path}"
     
     if test_cmd is None:
-        test_cmd = f"{sys.executable} -m unittest discover"
+        if os.path.exists(os.path.join(abs_repo_path, "package.json")):
+            test_cmd = "npm test"
+        else:
+            test_cmd = f"{sys.executable} -m unittest discover"
         
     try:
         result = subprocess.run(

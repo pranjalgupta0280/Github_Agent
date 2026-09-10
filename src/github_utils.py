@@ -50,7 +50,7 @@ def inspect_repository(repo_path: str) -> Dict[str, Any]:
     for root, dirs, files in os.walk(abs_path):
         dirs[:] = [d for d in dirs if d not in ignore_dirs]
         for file in files:
-            if file.endswith(('.py', '.md', '.txt', '.json', '.yaml', '.yml')):
+            if file.endswith(('.py', '.js', '.ts', '.jsx', '.tsx', '.json', '.md')):
                 full_path = os.path.join(root, file)
                 rel_path = os.path.relpath(full_path, abs_path)
                 file_tree.append(rel_path)

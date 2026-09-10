@@ -26,7 +26,7 @@ def execute_patch_node(state: AgentState) -> AgentState:
     target_file = None
     target_content = ""
     for filename, content in state["target_files"].items():
-        if filename.endswith(".py") and not filename.startswith("test_"):
+        if filename.endswith((".py", ".js", ".ts", ".jsx", ".tsx")) and not filename.startswith("test_") and not filename.endswith(".test.js"):
             target_file = filename
             target_content = content
             break
@@ -56,12 +56,15 @@ Return ONLY the complete raw Python code fixed, with no markdown codeblocks or e
     if api_key:
         try:
             llm = ChatGoogleGenerativeAI(
-                model="gemini-1.5-flash",
+                model="gemini-3.6-flash",
                 google_api_key=api_key,
                 temperature=0
             )
             response = llm.invoke(prompt)
-            raw_text = response.content.strip()
+            if isinstance(response.content, list):
+                raw_text = "".join([str(chunk) for chunk in response.content]).strip()
+            else:
+                raw_text = str(response.content).strip()
             if raw_text.startswith("```python"):
                 raw_text = raw_text[9:]
             if raw_text.startswith("```"):
