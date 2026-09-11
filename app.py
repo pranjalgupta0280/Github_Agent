@@ -10,7 +10,7 @@ from typing import Optional
 
 from src.state import AgentState
 from src.graph import build_issue_resolver_graph
-from src.github_utils import fetch_github_issue, create_pull_request
+from src.github_utils import fetch_github_issue, create_pull_request, clone_github_repository
 
 app = FastAPI(title="Smart GitHub Issue Resolver API")
 
@@ -19,7 +19,7 @@ app.mount("/static", StaticFiles(directory="web"), name="static")
 
 class ResolveRequest(BaseModel):
     issue_url: str
-    repo_path: str
+    repo_path: Optional[str] = None
     github_token: Optional[str] = None
 
 @app.get("/")
@@ -30,16 +30,16 @@ def serve_index():
 def api_resolve_issue(req: ResolveRequest):
     token = req.github_token or os.getenv("GITHUB_TOKEN")
     
-    # 1. Fetch GitHub issue details
-    try:
-        repo_name, title, body = fetch_github_issue(req.issue_url, token=token)
-    except Exception as e:
-        title = "Auto-resolved GitHub Issue"
-        body = f"Issue resolution requested for {req.issue_url}"
-
-    abs_repo_path = os.path.abspath(req.repo_path)
-    if not os.path.exists(abs_repo_path):
-        raise HTTPException(status_code=400, detail=f"Local repository path not found: {abs_repo_path}")
+    # Auto-clone repository if local_repo_path is omitted
+    if not req.repo_path:
+        try:
+            abs_repo_path = clone_github_repository(req.issue_url, token=token)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to clone remote repository: {str(e)}")
+    else:
+        abs_repo_path = os.path.abspath(req.repo_path)
+        if not os.path.exists(abs_repo_path):
+            raise HTTPException(status_code=400, detail=f"Local repository path not found: {abs_repo_path}")
 
     initial_state: AgentState = {
         "issue_url": req.issue_url,

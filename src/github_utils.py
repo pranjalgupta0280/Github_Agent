@@ -1,11 +1,33 @@
 import os
 import glob
+import tempfile
+import git
 from typing import List, Dict, Tuple, Any
 from dotenv import load_dotenv
 # pyrefly: ignore [missing-import]
 from github import Github, Auth
 
 load_dotenv()
+
+def clone_github_repository(issue_url: str, token: str = None) -> str:
+    """
+    Clones a remote GitHub repository to a temporary local workspace.
+    """
+    if not token:
+        token = os.getenv("GITHUB_TOKEN")
+        
+    parts = issue_url.rstrip("/").split("/")
+    owner, repo_name = parts[-4], parts[-3]
+    
+    if token:
+        clone_url = f"https://x-access-token:{token}@github.com/{owner}/{repo_name}.git"
+    else:
+        clone_url = f"https://github.com/{owner}/{repo_name}.git"
+        
+    temp_dir = tempfile.mkdtemp(prefix=f"agent_repo_{repo_name}_")
+    print(f"[Git] Cloning {owner}/{repo_name} into temporary directory {temp_dir}...")
+    git.Repo.clone_from(clone_url, temp_dir)
+    return temp_dir
 
 def fetch_github_issue(issue_url: str, token: str = None) -> Tuple[str, str, str]:
     """
