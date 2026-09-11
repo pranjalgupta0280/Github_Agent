@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart GitHub Issue Resolver</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-glow"></div>
+    <main class="container">
+        <header class="header">
+            <div class="logo">⚡ Smart GitHub Agent</div>
+            <h1>Automated GitHub Issue Resolver</h1>
+            <p>Paste a GitHub issue link and local repository path. The AI agent will investigate, generate a fix, verify tests, and open a PR.</p>
+        </header>
+
+        <section class="card form-card">
+            <form id="resolver-form">
+                <div class="input-group">
+                    <label for="issue-url">GitHub Issue URL</label>
+                    <input type="url" id="issue-url" id="issue_url" placeholder="https://github.com/owner/repo/issues/123" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="repo-path">Local Repository Path</label>
+                    <input type="text" id="repo-path" placeholder="C:\node\my-project" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="github-token">GitHub Access Token (Optional)</label>
+                    <input type="password" id="github-token" placeholder="github_pat_...">
+                </div>
+
+                <button type="submit" id="submit-btn" class="btn-primary">
+                    <span>🚀 Launch AI Resolver</span>
+                </button>
+            </form>
+        </section>
+
+        <section class="card status-card hidden" id="status-section">
+            <h2>Live Resolution Pipeline</h2>
+            
+            <div class="stepper">
+                <div class="step" id="step-investigate">
+                    <div class="step-circle">1</div>
+                    <div class="step-label">Investigate</div>
+                </div>
+                <div class="step" id="step-execute">
+                    <div class="step-circle">2</div>
+                    <div class="step-label">Execution (Patch)</div>
+                </div>
+                <div class="step" id="step-verify">
+                    <div class="step-circle">3</div>
+                    <div class="step-label">Verification</div>
+                </div>
+                <div class="step" id="step-resolve">
+                    <div class="step-circle">4</div>
+                    <div class="step-label">Resolution & PR</div>
+                </div>
+            </div>
+
+            <div class="log-container">
+                <pre id="log-output">Ready to start resolution pipeline...</pre>
+            </div>
+
+            <div id="result-box" class="result-box hidden">
+                <h3 id="result-title">Resolution Complete!</h3>
+                <p id="result-desc"></p>
+                <a id="pr-link" href="#" target="_blank" class="btn-success">View Opened Pull Request ↗</a>
+            </div>
+        </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
