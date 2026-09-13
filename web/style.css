@@ -223,3 +223,72 @@ body {
     font-size: 14px;
     font-weight: 600;
 }
+
+/* Issue & Code Display Cards */
+.details-card {
+    background: #010409;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 18px;
+    margin-top: 16px;
+}
+
+.details-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-issue {
+    background: rgba(210, 153, 34, 0.2);
+    color: #e3b341;
+    border: 1px solid rgba(210, 153, 34, 0.4);
+}
+
+.badge-file {
+    background: rgba(88, 166, 255, 0.2);
+    color: var(--accent-blue);
+    border: 1px solid rgba(88, 166, 255, 0.4);
+}
+
+.file-path {
+    font-family: monospace;
+    font-size: 13px;
+    color: var(--accent-blue);
+    word-break: break-all;
+}
+
+.issue-body-text {
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text-primary);
+    white-space: pre-wrap;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 12px;
+    border-radius: 6px;
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.code-container {
+    background: #0d1117;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 14px;
+    max-height: 320px;
+    overflow: auto;
+    font-family: 'Consolas', 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #e6edf3;
+}

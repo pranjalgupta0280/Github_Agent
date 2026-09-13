@@ -20,7 +20,7 @@
             <form id="resolver-form">
                 <div class="input-group">
                     <label for="issue-url">GitHub Issue URL</label>
-                    <input type="url" id="issue-url" id="issue_url" placeholder="https://github.com/owner/repo/issues/123" required>
+                    <input type="url" id="issue-url" placeholder="https://github.com/owner/repo/issues/123" required>
                 </div>
 
                 <div class="input-group">
@@ -65,6 +65,26 @@
                 <pre id="log-output">Ready to start resolution pipeline...</pre>
             </div>
 
+            <!-- Issue Display Box -->
+            <div id="issue-display-card" class="details-card hidden">
+                <div class="details-header">
+                    <span class="badge badge-issue">📌 GitHub Issue</span>
+                    <h3 id="display-issue-title">Issue Title</h3>
+                </div>
+                <pre id="display-issue-body" class="issue-body-text"></pre>
+            </div>
+
+            <!-- Target File Code Box -->
+            <div id="code-display-card" class="details-card hidden">
+                <div class="details-header">
+                    <span class="badge badge-file">📄 Target File</span>
+                    <span id="display-target-file" class="file-path">path/to/file.py</span>
+                </div>
+                <div class="code-container">
+                    <pre><code id="display-code-content">// File source code will be rendered here...</code></pre>
+                </div>
+            </div>
+
             <div id="result-box" class="result-box hidden">
                 <h3 id="result-title">Resolution Complete!</h3>
                 <p id="result-desc"></p>
@@ -73,6 +93,6 @@
         </section>
     </main>
 
-    <script src="/static/app.js"></script>
+    <script src="/static/app.js?v=2"></script>
 </body>
 </html>

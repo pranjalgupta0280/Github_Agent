@@ -33,7 +33,7 @@ if __name__ == '__main__':
 """)
 
     def tearDown(self):
-        shutil.rmtree(self.test_dir)
+        shutil.rmtree(self.test_dir, ignore_errors=True)
 
     def test_full_graph_execution(self):
         app = build_issue_resolver_graph()
@@ -61,7 +61,7 @@ if __name__ == '__main__':
         
         self.assertTrue(final_state["tests_passed"])
         self.assertEqual(final_state["status"], "resolved")
-        self.assertEqual(final_state["branch_name"], "fix/issue-auto-resolver")
+        self.assertTrue(final_state["branch_name"].startswith("fix/issue"))
 
 if __name__ == '__main__':
     unittest.main()

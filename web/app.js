@@ -16,7 +16,6 @@ document.getElementById('resolver-form').addEventListener('submit', async (e) =>
     submitBtn.innerText = "⏳ Running Resolution Pipeline...";
 
     logOutput.innerText = "[Pipeline] Initializing agent state machine...\n";
-
     setStepActive('step-investigate');
 
     try {
@@ -30,24 +29,77 @@ document.getElementById('resolver-form').addEventListener('submit', async (e) =>
             })
         });
 
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.detail || 'Failed to start resolution process.');
+        }
+
         const data = await response.json();
+        const taskId = data.task_id;
+        if (!taskId) {
+            throw new Error(`The server did not return a task ID: ${JSON.stringify(data)}`);
+        }
+        logOutput.innerText += `[Pipeline] Task queued (ID: ${taskId.slice(0, 8)}...). Polling status...\n`;
 
-        if (response.ok && data.status === 'resolved') {
-            setStepCompleted('step-investigate');
-            setStepCompleted('step-execute');
-            setStepCompleted('step-verify');
-            setStepCompleted('step-resolve');
+        // Poll task status endpoint until done
+        let completed = false;
+        while (!completed) {
+            await new Promise(r => setTimeout(r, 1500));
+            const statusRes = await fetch(`/api/status/${taskId}`);
+            if (!statusRes.ok) continue;
 
-            logOutput.innerText += `\n[Success] Resolution complete!\n[Patch] ${data.patch || 'Fix applied'}\n[PR] ${data.pr_url}`;
-            
-            document.getElementById('result-desc').innerText = `Issue resolved automatically! ${data.patch || ''}`;
-            document.getElementById('pr-link').href = data.pr_url;
-            resultBox.classList.remove('hidden');
-        } else {
-            logOutput.innerText += `\n[Error] Pipeline status: ${data.status.toUpperCase()}\nDetails: ${data.error_message || 'Tests failed or max retries reached.'}`;
+            const taskInfo = await statusRes.json();
+            const status = taskInfo.status;
+
+            // Update Issue Display Box if available
+            if (taskInfo.issue_title) {
+                document.getElementById('display-issue-title').innerText = taskInfo.issue_title;
+                document.getElementById('display-issue-body').innerText = taskInfo.issue_body || '(No description provided)';
+                document.getElementById('issue-display-card').classList.remove('hidden');
+            }
+
+            // Update Target Code Box if available
+            if (taskInfo.target_file && taskInfo.target_content) {
+                document.getElementById('display-target-file').innerText = taskInfo.target_file;
+                document.getElementById('display-code-content').innerText = taskInfo.target_content;
+                document.getElementById('code-display-card').classList.remove('hidden');
+            }
+
+            if (status === 'in_progress' || status === 'investigating') {
+                setStepActive('step-investigate');
+                logOutput.innerText = `[Pipeline] Task state: Investigating & scanning repo...`;
+            } else if (status === 'executing') {
+                setStepCompleted('step-investigate');
+                setStepActive('step-execute');
+                logOutput.innerText = `[Pipeline] Task state: Executing LLM patch...`;
+            } else if (status === 'verifying') {
+                setStepCompleted('step-investigate');
+                setStepCompleted('step-execute');
+                setStepActive('step-verify');
+                logOutput.innerText = `[Pipeline] Task state: Running verification sandbox tests...`;
+            } else if (status === 'resolved') {
+                completed = true;
+                setStepCompleted('step-investigate');
+                setStepCompleted('step-execute');
+                setStepCompleted('step-verify');
+                setStepCompleted('step-resolve');
+
+                logOutput.innerText = `[Success] Resolution complete!\n[Patch] ${taskInfo.patch || 'Fix applied successfully'}\n[PR] ${taskInfo.pr_url || 'PR created'}`;
+                document.getElementById('result-desc').innerText = taskInfo.patch || 'Issue resolved automatically!';
+                if (taskInfo.pr_url) {
+                    document.getElementById('pr-link').href = taskInfo.pr_url;
+                    document.getElementById('pr-link').classList.remove('hidden');
+                } else {
+                    document.getElementById('pr-link').classList.add('hidden');
+                }
+                resultBox.classList.remove('hidden');
+            } else if (status === 'failed') {
+                completed = true;
+                logOutput.innerText = `[Error] Resolution failed!\nDetails: ${taskInfo.error_message || 'Tests failed or max retries reached.'}`;
+            }
         }
     } catch (err) {
-        logOutput.innerText += `\n[Error] Failed to connect to server: ${err.message}`;
+        logOutput.innerText += `\n[Error] Connection error: ${err.message}`;
     } finally {
         submitBtn.disabled = false;
         submitBtn.innerText = "🚀 Launch AI Resolver";

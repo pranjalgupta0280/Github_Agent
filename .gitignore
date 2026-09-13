@@ -1,18 +1,29 @@
 # API Keys & Secrets
 .env
+*.env
 
-# Python Cache
+# Python Cache & Virtual Environments
 __pycache__/
 *.py[cod]
 *$py.class
-
-# Pytest / Virtualenv
-.pytest_cache/
 venv/
 .venv/
 env/
 .env/
+forgeai-main/venv/
+forgeai-main/__pycache__/
+
+# Testing & Sandbox Cache
+.pytest_cache/
+agent_repo_*
 
 # IDE files
 .vscode/
 .idea/
+
+# OS / System junk
+.DS_Store
+Thumbs.db
+forgeai-main
+scratch/
+pr_issue_flowchart.txt

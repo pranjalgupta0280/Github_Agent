@@ -1,0 +1,73 @@
+================================================================================
+                    FORGEAI & GITHUB AGENT ARCHITECTURE FLOWCHART
+================================================================================
+
+1. ISSUE FETCHING & URL PARSING FLOW
+------------------------------------
+[GitHub Issue URL] 
+       │
+       ▼
+┌─────────────────────────────────────────┐
+│ Regex URL Parser (tools/github_tool.py) │
+│ Extracts: Owner, Repo, Issue Number     │
+└────────────────────┬────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────┐
+│ GitHub API (v3 JSON API / PyGithub)     │
+│ Auth: GITHUB_TOKEN (optional)           │
+└────────────────────┬────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────┐
+│ Structured Issue Details                │
+│ (title, body, author, labels, state)    │
+└─────────────────────────────────────────┘
+
+
+2. PLANNING & EXECUTION WORKFLOW
+--------------------------------
+┌─────────────────────────┐
+│ Structured Issue        │
+└────────────┬────────────┘
+             │
+             ▼
+┌─────────────────────────┐
+│ Planner Agent           │
+│ (agents/planner.py)     │
+│ Groq / Llama 3.3 / LLM  │
+└────────────┬────────────┘
+             │
+             ▼
+┌─────────────────────────┐
+│ Step-by-Step Resolution │
+│ Plan & File Targets     │
+└────────────┬────────────┘
+             │
+             ▼
+┌────────────────────────────────────────────────────────┐
+│ State Graph Resolver (src/graph.py & src/agent.py)     │
+├────────────────────────────────────────────────────────┤
+│  [1. Investigate Node]  --> Scans repository tree      │
+│            │                                           │
+│            ▼                                           │
+│  [2. Execute Patch Node]--> Generates code fix (Gemini) │
+│            │                                           │
+│            ▼                                           │
+│  [3. Sandbox Verify]   --> Runs unit tests             │
+│       │        │                                       │
+│    Passed    Failed (Retries < Max)                    │
+│       │        └──────────────────────┐                │
+│       ▼                               ▼                │
+│  [4. Create PR Node]         Re-trigger Patch          │
+└────────────────────────────────────────────────────────┘
+
+
+3. KEY IMPROVEMENTS MADE TO FORGEAI-MAIN & AGENT CODEBASE
+---------------------------------------------------------
+- URL Parser: Fixed fragile split logic; replaced with robust regex matching.
+- Token Auth: Avoided sending "token None" header on unauthenticated requests.
+- Error Handling: Added key validations and model fallbacks for LLM calls.
+- Model Endpoints: Updated LLM model targets to active Gemini endpoints.
+- Git Hygiene: Comprehensive .gitignore added to exclude temporary artifacts.
+================================================================================

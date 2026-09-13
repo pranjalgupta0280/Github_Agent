@@ -11,8 +11,12 @@ def route_after_verification(state: AgentState) -> str:
     """
     Conditional edge router after running verification tests.
     """
-    if state["tests_passed"]:
+    if state["tests_passed"] and state.get("modified_files"):
         return "resolve"
+    elif state["tests_passed"]:
+        # A passing baseline does not mean the reported issue has been addressed.
+        # Generate a patch before attempting to open a PR.
+        return "execute_patch"
     elif state["retry_count"] >= state["max_retries"]:
         return END
     else:
