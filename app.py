@@ -41,6 +41,13 @@ def api_resolve_issue(req: ResolveRequest):
         if not os.path.exists(abs_repo_path):
             raise HTTPException(status_code=400, detail=f"Local repository path not found: {abs_repo_path}")
 
+    # 1. Fetch GitHub issue details
+    try:
+        repo_name, title, body = fetch_github_issue(req.issue_url, token=token)
+    except Exception as e:
+        title = "Auto-resolved GitHub Issue"
+        body = f"Issue resolution requested for {req.issue_url}"
+
     initial_state: AgentState = {
         "issue_url": req.issue_url,
         "issue_title": title,
@@ -82,7 +89,7 @@ def api_resolve_issue(req: ResolveRequest):
         "tests_passed": final_state["tests_passed"],
         "patch": final_state.get("patch"),
         "pr_url": final_state.get("pr_url"),
-        "error_message": final_state.get("error_message")
+        "error_message": final_state.get("error_message") or ((final_state.get("test_logs") or "")[:500] if not final_state.get("tests_passed") else None)
     }
 
 if __name__ == "__main__":

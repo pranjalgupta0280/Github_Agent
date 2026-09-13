@@ -5,18 +5,26 @@ import sys
 from src.state import AgentState
 from src.graph import build_issue_resolver_graph
 
-from src.github_utils import fetch_github_issue
+from src.github_utils import fetch_github_issue, clone_github_repository
 
-def resolve_github_issue(issue_url: str, local_repo_path: str, fallback_title: str = None, fallback_body: str = None):
+def resolve_github_issue(issue_url: str, local_repo_path: str = None, fallback_title: str = None, fallback_body: str = None):
     print(f"\n[GitHub] Fetching issue from GitHub: {issue_url}")
     try:
         repo_name, title, body = fetch_github_issue(issue_url)
     except Exception as e:
         print(f"[Warning] Remote fetch failed ({e}). Using local fallback issue parameters.")
-        title = fallback_title or "Fix division by zero bug in calculator.py"
-        body = fallback_body or "divide(10, 0) raises ZeroDivisionError, expected to return None safely."
+        title = fallback_title or "Auto-resolved GitHub Issue"
+        body = fallback_body or f"Issue resolution requested for {issue_url}"
 
-    abs_repo_path = os.path.abspath(local_repo_path)
+    if not local_repo_path:
+        try:
+            abs_repo_path = clone_github_repository(issue_url)
+        except Exception as e:
+            print(f"[Git Error] Failed to clone repo: {e}")
+            return None
+    else:
+        abs_repo_path = os.path.abspath(local_repo_path)
+
     print(f"[Target Repo] Local Path: {abs_repo_path}")
     print(f"[Issue Title] {title}")
 
@@ -53,8 +61,8 @@ def resolve_github_issue(issue_url: str, local_repo_path: str, fallback_title: s
 def main():
     issues_to_resolve = [
         {
-            "issue_url": "https://github.com/pranjalgupta0280/Uber/issues/1",
-            "local_repo_path": r"C:\node\Uber2",
+            "issue_url": "https://github.com/pranjalgupta0280/WaterIntake/issues/3",
+            "local_repo_path": None,  # Auto-clones WaterIntake from GitHub
         }
     ]
 
