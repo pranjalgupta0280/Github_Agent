@@ -36,6 +36,7 @@ Clicking **View Opened Pull Request** opens the newly generated PR directly on G
 
 ## ✨ Features
 
+- **Multi-User Token Authentication**: Accepts any user's GitHub Personal Access Token (PAT) via web form to clone and create PRs under their account, falling back to your server's default `GITHUB_TOKEN` if left blank.
 - **Autonomous Issue Ingestion**: Parses GitHub URLs and extracts titles, descriptions, and test logs using PyGithub API.
 - **Intelligent File Targeting**: Scans repository tree and matches faulty modules using exact filename heuristics and LLM context analysis.
 - **AI Code Patching**: Generates complete, functional bug fixes using Gemini and Groq model fallbacks.
